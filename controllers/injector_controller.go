@@ -22,8 +22,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/digitalnerd/injector-operator/api/v1alpha1"
 	injectorv1alpha1 "github.com/digitalnerd/injector-operator/api/v1alpha1"
 )
 
@@ -50,13 +53,34 @@ func (r *InjectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	var injector *v1alpha1.Injector
+	r.Client.Get(ctx, req.NamespacedName, injector)
+	if err := r.Get(ctx, req.NamespacedName, injector); err != nil {
+		log.Log.Error(err, "enable to fetch a CronJob")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	return ctrl.Result{}, nil
+	myFanalizerName := "digitalnerd.injector.dev/finalizer"
+	// var injectorList v1alpha1.InjectorList
+	// r.Client.List(ctx, &injectorList)
+	// for i,v := range injectorList.Items {
+	// 	// ...
+	// }
+
+	
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *InjectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&injectorv1alpha1.Injector{}).
+		Watches(
+			&source.Kind{Type: &corev1.Pod{}},
+			handler.EnqueueRequestsFromMapFunc(r.GetAll),
+		).
 		Complete(r)
+}
+
+func (r *InjectorReconciler) GetAll(o client.Client) []ctrl.Request {
+
 }
