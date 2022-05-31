@@ -1,0 +1,6 @@
+apiVersion: injector.dev.digitalnerd/v1alpha1
+kind: Injector
+metadata:
+  name: injector-sample
+spec:
+  # TODO(user): Add fields here
